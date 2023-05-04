@@ -15,7 +15,7 @@ Install the required dependencies using pip: pip install -r requirements.txt
 Set up a MySQL database and configure the application to connect to it.
 Start the application by running python app.py in your terminal.
 Usage
-Once the application is running, you can access it by visiting http://localhost:5000 in your web browser. From there, you can create a new account or log in with an existing one to start sharing and discovering recipes.
+Once the application is running, you can access it by visiting https://howiehong.github.io/templates/index.html in your web browser. From there, you can create a new account or log in with an existing one to start sharing and discovering recipes.
 
 Features
 The Project Title web application includes the following features:
