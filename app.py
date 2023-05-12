@@ -1,5 +1,7 @@
 import os
 import sqlite3
+import pymongo
+from datetime import datetime
 from flask import Flask, jsonify, render_template, url_for, request
 
 app = Flask(__name__)
@@ -7,15 +9,20 @@ app._static_folder = 'static'
 
 
 def get_crashes():
-    db_path = r'/Users/howard/Downloads/motor_vehicle_collisions/crashes.db'
     try:
-        conn = sqlite3.connect(db_path)
-        c = conn.cursor()
-        c.execute("SELECT * FROM crashes LIMIT 1000;")
-        rows = c.fetchall()
-        return [dict(zip(['date', 'time', 'borough', 'zip_code', 'latitude', 'longitude'], row)) for row in rows]
+        # Connect to MongoDB
+        client = pymongo.MongoClient("mongodb+srv://howardhong2000:Yjlh2018@nyccrash.kdyjvgn.mongodb.net/")
+        db = client["NYC-Crashes"]
+        collection = db["Crashes"]
+
+        # Retrieve data from MongoDB
+        cursor = collection.find().limit(1000)
+        rows = [doc for doc in cursor]
+
+        # Format the data as a list of dictionaries
+        return [dict(zip(['date', 'time', 'borough', 'zip_code', 'latitude', 'longitude'], row.values())) for row in rows]
     except Exception as e:
-        print(f"Error retrieving crashes: {e}")
+        print(f"Error retrieving Crashes: {e}")
         return None
 
 @app.route("/")
@@ -38,31 +45,29 @@ def filter():
     print(f"Year: {year}")
     print(f"Month: {month}")
 
-    # Construct your SQL query based on the year and month parameters
+    # Construct your MongoDB query based on the year and month parameters
     if year:
         start_date = '01/01/' + year
         end_date = '12/31/' + year
-        query = "SELECT * FROM crashes WHERE `CRASH_DATE` LIKE '{}' AND '{}' LIMIT 1000".format(start_date, end_date)
+        query = {'CRASH_DATE': {'$regex': '^\\d{2}/\\d{2}/' + year + '\\b.*\\b$'}}
+        print(query)
         if month:
-            month_start = month + '/01' + '/' + year
-            month_end = month + '/31' + '/' + year
-            query = "SELECT * FROM crashes WHERE `CRASH_DATE` LIKE '{}' AND '{}' LIMIT 1000".format(month_start, month_end)
+            query = {'CRASH_DATE': {'$regex': '^' + month + '/\\d{2}/' + year + '\\b.*\\b$'}}
+            print(query)
     elif month:
-        query = "SELECT * FROM crashes WHERE `CRASH_DATE` LIKE '{}/%' LIMIT 1000".format(month)
+        query = {'CRASH_DATE': {'$regex': '^' + month + '/\\d{2}/\\d{4}\\b.*\\b$'}}
+        print(query)
     else:
         return jsonify({'error': 'Please provide a year or month parameter'})
 
     # Execute the query and return the results as a JSON response
-    db_path = r'/Users/howard/Downloads/motor_vehicle_collisions/crashes.db'
-    try:
-        conn = sqlite3.connect(db_path)
-        c = conn.cursor()
-        results = c.execute(query).fetchall()  # fetch query results
-        return jsonify(results)
-    except Exception as e:
-        print(f"Error retrieving crashes: {e}")
-        return None
-
+    client = pymongo.MongoClient("mongodb+srv://howardhong2000:Yjlh2018@nyccrash.kdyjvgn.mongodb.net/")
+    db = client["NYC-Crashes"]
+    collection = db["Crashes"]
+    results_raw = list(collection.find(query,{"_id": 0}).limit(1000))
+    results = [list(result.values()) for result in results_raw]
+    return jsonify(results)
+    
 # Generate URLs for static files in your templates
 @app.context_processor
 def override_url_for():
