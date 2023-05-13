@@ -11,7 +11,7 @@ app._static_folder = 'static'
 def get_crashes():
     try:
         # Connect to MongoDB
-        client = pymongo.MongoClient("mongodb+srv://howardhong2000:Yjlh2018@nyccrash.kdyjvgn.mongodb.net/")
+        client = pymongo.MongoClient("mongodb+srv://howardhong2000:test@nyccrash.kdyjvgn.mongodb.net/")
         db = client["NYC-Crashes"]
         collection = db["Crashes"]
 
@@ -61,7 +61,7 @@ def filter():
         return jsonify({'error': 'Please provide a year or month parameter'})
 
     # Execute the query and return the results as a JSON response
-    client = pymongo.MongoClient("mongodb+srv://howardhong2000:Yjlh2018@nyccrash.kdyjvgn.mongodb.net/")
+    client = pymongo.MongoClient("mongodb+srv://howardhong2000:test@nyccrash.kdyjvgn.mongodb.net/")
     db = client["NYC-Crashes"]
     collection = db["Crashes"]
     results_raw = list(collection.find(query,{"_id": 0}).limit(1000))
